@@ -21,6 +21,7 @@
 #include <linux/mailbox_controller.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
+#include <linux/version.h>
 
 #define INTR_STAT	0x0
 #define INTR_SET	0x8
@@ -167,6 +168,14 @@ fail:
 	return err;
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,11,0)
+static void phytium_mbox_remove(struct platform_device *pdev)
+{
+	struct phytium_mbox *mbox = platform_get_drvdata(pdev);
+
+	mbox_controller_unregister(&mbox->mbox);
+}
+#else
 static int phytium_mbox_remove(struct platform_device *pdev)
 {
 	struct phytium_mbox *mbox = platform_get_drvdata(pdev);
@@ -175,6 +184,7 @@ static int phytium_mbox_remove(struct platform_device *pdev)
 
 	return 0;
 }
+#endif
 
 static struct platform_driver phytium_mbox_driver = {
 	.probe = phytium_mbox_probe,
