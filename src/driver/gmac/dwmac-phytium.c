@@ -12,6 +12,7 @@
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/stmmac.h>
+#include <linux/version.h>
 
 #include "stmmac.h"
 #include "stmmac_platform.h"
@@ -57,7 +58,11 @@ dwmac_phytium_parse_config_acpi(struct platform_device *pdev, const char *mac)
 	np = dev_fwnode(dev);
 
 	plat->phy_interface = fwnode_get_phy_mode(np);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,6,0)
 	plat->mac_interface = plat->phy_interface;
+#else
+	plat->interface = plat->phy_interface;
+#endif
 
 	/* Get max speed of operation from properties */
 	if (fwnode_property_read_u32(np, "max-speed", &plat->max_speed))
@@ -82,8 +87,13 @@ dwmac_phytium_parse_config_acpi(struct platform_device *pdev, const char *mac)
 
 	plat->force_sf_dma_mode =
 		fwnode_property_read_bool(np, "snps,force_sf_dma_mode");
-	if (fwnode_property_read_bool(np,"snps,en-tx-lpi_clockgating"))
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,6,0)
+	if (fwnode_property_read_bool(np,"snps,en-tx-lpi-clockgating"))
 			plat->flags |= STMMAC_FLAG_EN_TX_LPI_CLOCKGATING;
+#else
+	plat->en_tx_lpi_clockgating =
+		fwnode_property_read_bool(np, "snps,en-tx-lpi-clockgating");
+#endif
 	/* Set the maxmtu to a default of JUMBO_LEN in case the
 	 * parameter is not present.
 	 */
